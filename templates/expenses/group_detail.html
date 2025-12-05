@@ -7,19 +7,23 @@
     <h1>{{ group.name }}</h1>
 
     <h2>Balances</h2>
-    <ul>
-        {% for user, amount in balances.items %}
-            <li>{{ user.username }} : {{ amount }}</li>
-        {% empty %}
-            <li>No balances yet.</li>
-        {% endfor %}
-    </ul>
+
+    {% if balance_entries %}
+        <ul>
+            {% for user, amount in balance_entries %}
+                <li>{{ user.username }} : {{ amount }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No balances yet.</p>
+    {% endif %}
 
     <h2>Expenses</h2>
     <ul>
         {% for expense in expenses %}
             <li>
-                {{ expense.description }} - {{ expense.amount }} (paid by {{ expense.paid_by.username }})
+                {{ expense.description }} - {{ expense.amount }}
+                (paid by {{ expense.paid_by.username }})
             </li>
         {% empty %}
             <li>No expenses yet.</li>
@@ -30,6 +34,8 @@
         <a href="{% url 'add_expense' group.id %}">Add Expense</a>
     </p>
 
-    <p><a href="{% url 'dashboard' %}">Back to groups</a></p>
+    <p>
+        <a href="{% url 'dashboard' %}">Back to groups</a>
+    </p>
 </body>
 </html>

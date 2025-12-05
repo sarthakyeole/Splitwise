@@ -1,7 +1,7 @@
 from collections import defaultdict
 from .models import Group 
 
-def calculate_balance(group: Group):
+def calculate_balances(group: Group):
     """
     Returns a dict: {user: net_amount}
     +ve => others owe this user
@@ -21,9 +21,9 @@ def calculate_balance(group: Group):
 
     
     # 2) apply settlements (who paid to whom back)
-    for s in group.settlements.select_related('paid_by', 'paid_to'):
-        balances[s.paid_by] -= float(s.amount)
-        balances[s.paid_to] += float(s.amount)
+    # for s in group.settlements.select_related('paid_by', 'paid_to'):
+    #     balances[s.paid_by] -= float(s.amount)
+    #     balances[s.paid_to] += float(s.amount)
 
 
     return balances
