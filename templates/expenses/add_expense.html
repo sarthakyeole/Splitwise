@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Expense - {{ group.name }}</title>
+</head>
+<body>
+    <h1>Add Expense in {{ group.name }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+
+    <p><a href="{% url 'group_detail' group.id %}">Back to group</a></p>
+</body>
+</html>
