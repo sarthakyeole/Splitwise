@@ -30,7 +30,7 @@ def group_detail(request, group_id):
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ['description', amount]
+        fields = ['description', 'amount']
 
 @login_required
 def add_expense(request, group_id):
