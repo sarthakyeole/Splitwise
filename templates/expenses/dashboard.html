@@ -5,6 +5,7 @@
 </head>
 <body>
     <h1>Your Groups</h1>
+    <p><a href="{% url 'create_group' %}">Create a new group</a></p>
     <ul>
         {% for group in groups %}
             <li>

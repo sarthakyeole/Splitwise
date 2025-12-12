@@ -4,6 +4,9 @@ from django import forms
 
 from .models import Group, Expense, Split
 from .utils import calculate_balances
+from .forms import GroupForm
+from django.contrib.auth.models import User
+from django.contrib import messages
 
 
 @login_required
@@ -65,5 +68,28 @@ def add_expense(request, group_id):
 
     return render(request, 'expenses/add_expense.html', {
         'group': group,
+        'form': form,
+    })
+
+@login_required
+def create_group(request):
+    if request.method == 'POST':
+        form = GroupForm(request.POST)
+        if form.is_valid():
+            group = form.save(commit=False)
+            group.created_by = request.user
+            group.save()
+            form.save_m2m()  
+            
+            if request.user not in group.members.all():
+                group.members.add(request.user)
+
+            messages.success(request, f"Group '{group.name}' created.")
+            return redirect('group_detail', group_id=group.id)
+
+    else:
+        form = GroupForm()
+        
+    return render(request, 'expenses/create_group.html', {
         'form': form,
     })
