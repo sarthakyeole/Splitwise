@@ -1,11 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django import forms
-
 from .models import Group, Expense, Split
 from .utils import calculate_balances
 from .forms import GroupForm
 from django.contrib.auth.models import User
+from django.contrib import messages
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 
 
@@ -93,3 +95,24 @@ def create_group(request):
     return render(request, 'expenses/create_group.html', {
         'form': form,
     })
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}. You are now logged in')
+
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+
+            if user is not None:
+                login(request, user)
+
+            return redirect('dashboard')
+
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'registration/register.html', {'form': form})
