@@ -7,8 +7,25 @@
 <body>
   <h1>{{ group.name }}</h1>
 
-  <h2>Who should pay whom</h2>
+  <h2>Activity</h2>
 
+  {% if activities %}
+    <ul>
+      {% for activity in activities %}
+        <li>
+          {{ activity.message }}
+          <small style="color:gray;">
+            ({{ activity.created_at|timesince }} ago)
+          </small>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No activity yet.</p>
+  {% endif %}
+
+
+  <h2>Who should pay whom</h2>
   {% if transactions %}
     <ul>
       {% for debtor, creditor, amount in transactions %}

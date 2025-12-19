@@ -80,3 +80,20 @@ class Settlement(models.Model):
 
     def __str__(self):
         return f"{self.paid_by.username} paid {self.paid_to.username} ₹{self.amount}"
+
+
+class Activity(models.Model):
+    group = models.ForeignKey(
+        Group, 
+        on_delete=models.CASCADE, 
+        related_name='activities'
+    )
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+    )
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.message

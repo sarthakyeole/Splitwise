@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django import forms
-from .models import Group, Expense, Split, Settlement
+from .models import Group, Expense, Split, Settlement, Activity
 from .utils import calculate_balances, simplify_debts
 from .forms import GroupForm, ExpenseForm
 from django.contrib.auth.models import User
@@ -27,6 +27,8 @@ def group_detail(request, group_id):
 
     transactions = simplify_debts(balances_dict)
 
+    activities = group.activities.order_by('-created_at')[:20]
+
     expenses = group.expenses.select_related('paid_by').prefetch_related('splits__user').all().order_by('-created_at')
 
     return render(request, 'expenses/group_detail.html', {
@@ -34,6 +36,7 @@ def group_detail(request, group_id):
         'balances': balance_entries,
         'transactions': transactions,
         'expenses': expenses,
+        'activities': activities,
     })
 
 
@@ -172,11 +175,10 @@ def quick_settle(request, group_id):
 
         balances = calculate_balances(group)
 
-        debtor_balance = balances.get(
-            User.objects.get(id=paid_by_id),
-            0
-        )
+        debtor = User.objects.get(id=paid_by_id)
+        creditor = User.objects.get(id=paid_to_id)
 
+        debtor_balance = balances.get(debtor, 0)
         owed_amount = abs(debtor_balance)
 
         if amount <= 0 or amount > owed_amount:
@@ -184,9 +186,16 @@ def quick_settle(request, group_id):
 
         Settlement.objects.create(
             group=group,
-            paid_by_id=paid_by_id,
-            paid_to_id=paid_to_id,
+            paid_by=debtor,
+            paid_to=creditor,
             amount=amount
+        )
+
+        # New Activity log
+        Activity.objects.create(
+            group=group,
+            user=request.user,
+            message=f'{debtor.username} settled ₹{amount} with {creditor.username}'
         )
 
     return redirect('group_detail', group_id=group_id)
