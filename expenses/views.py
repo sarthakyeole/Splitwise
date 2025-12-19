@@ -69,6 +69,13 @@ def add_expense(request, group_id):
                     if i == len(members) - 1:
                         share = round(amount - per_share * (len(members) - 1), 2)
                     Split.objects.create(expense=expense, user=m, amount=share)
+                    
+                # Activity log for the equal split expense
+                Activity.objects.create(
+                    group=group,
+                    user=request.user,
+                    message=f'{request.user.username} added expense "{expense.description}" ₹{expense.amount}'
+                )
 
                 messages.success(request, "Expense saved (equal split).")
                 return redirect('group_detail', group_id=group.id)
@@ -103,6 +110,13 @@ def add_expense(request, group_id):
                 # create Split objects
                 for m, share in splits_to_create:
                     Split.objects.create(expense=expense, user=m, amount=share)
+
+                # Activity log for the unequal split expense
+                Activity.objects.create(
+                    group=group,
+                    user=request.user,
+                    message=f'{request.user.username} added expense "{expense.description}" ₹{expense.amount}'
+                )
 
                 messages.success(request, "Expense saved (unequal split).")
                 return redirect('group_detail', group_id=group.id)
