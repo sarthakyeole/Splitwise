@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django import forms
 from .models import Group, Expense, Split
 from .utils import calculate_balances
-from .forms import GroupForm
+from .forms import GroupForm, ExpenseForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
@@ -26,7 +26,7 @@ def group_detail(request, group_id):
 
     balance_entries = list(balances_dict.items())
 
-    expenses = group.expenses.select_related('paid_by').all().order_by('-created_at')
+    expenses = group.expenses.select_related('paid_by').prefetch_related('splits__user').all().order_by('-created_at')
 
     return render(request, 'expenses/group_detail.html', {
         'group': group,
@@ -35,42 +35,84 @@ def group_detail(request, group_id):
     })
 
 
-class ExpenseForm(forms.ModelForm):
-    class Meta:
-        model = Expense
-        fields = ['description', 'amount']
-
-
 @login_required
 def add_expense(request, group_id):
     group = get_object_or_404(Group, id=group_id, members=request.user)
+    members = list(group.members.all())
 
     if request.method == 'POST':
         form = ExpenseForm(request.POST)
         if form.is_valid():
-            expense = form.save(commit=False)
-            expense.group = group
-            expense.paid_by = request.user
-            expense.save()
+            description = form.cleaned_data['description']
+            amount = float(form.cleaned_data['amount'])
+            split_type = form.cleaned_data.get('split_type', 'equal')
 
-            # Equal split among all members
-            members = group.members.all()
-            share = expense.amount / members.count()
+            # create expense first
+            expense = Expense.objects.create(
+                group=group,
+                description=description,
+                amount=amount,
+                paid_by=request.user
+            )
 
-            for member in members:
-                Split.objects.create(
-                    expense=expense,
-                    user=member,
-                    amount=share,
-                )
+            # Equal split
+            if split_type == 'equal':
+                per_share = round(amount / len(members), 2)
+                # adjust last person's share to match total (to avoid tiny rounding diff)
+                for i, m in enumerate(members):
+                    share = per_share
+                    if i == len(members) - 1:
+                        share = round(amount - per_share * (len(members) - 1), 2)
+                    Split.objects.create(expense=expense, user=m, amount=share)
 
-            return redirect('group_detail', group_id=group.id)
+                messages.success(request, "Expense saved (equal split).")
+                return redirect('group_detail', group_id=group.id)
+
+            # Unequal split
+            else:
+                splits_to_create = []
+                total_share = 0.0
+                # read each member's share from POST: share_<user_id>
+                for m in members:
+                    key = f"share_{m.id}"
+                    raw = request.POST.get(key, '').strip()
+                    try:
+                        share_value = float(raw) if raw != '' else 0.0
+                    except ValueError:
+                        expense.delete()
+                        return render(request, 'expenses/add_expense.html', {
+                            'group': group, 'form': form, 'members': members,
+                            'error': f"Invalid number for {m.username}: {raw}"
+                        })
+                    total_share += share_value
+                    splits_to_create.append((m, round(share_value, 2)))
+
+                # validate total equals expense amount within tolerance
+                if abs(total_share - amount) > 0.01:
+                    expense.delete()
+                    return render(request, 'expenses/add_expense.html', {
+                        'group': group, 'form': form, 'members': members,
+                        'error': f"Total shares ({total_share}) must equal expense amount ({amount})."
+                    })
+
+                # create Split objects
+                for m, share in splits_to_create:
+                    Split.objects.create(expense=expense, user=m, amount=share)
+
+                messages.success(request, "Expense saved (unequal split).")
+                return redirect('group_detail', group_id=group.id)
+
+        return render(request, 'expenses/add_expense.html', {
+            'group': group, 'form': form, 'members': members,
+        })
+
     else:
         form = ExpenseForm()
-
+        
     return render(request, 'expenses/add_expense.html', {
-        'group': group,
-        'form': form,
+        'group': group, 
+        'form': form, 
+        'members': members,
     })
 
 @login_required

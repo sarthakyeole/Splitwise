@@ -1,41 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ group.name }}</title>
+  <meta charset="utf-8" />
+  <title>{{ group.name }}</title>
 </head>
 <body>
-    <h1>{{ group.name }}</h1>
+  <h1>{{ group.name }}</h1>
 
-    <h2>Balances</h2>
-
-    {% if balance_entries %}
-        <ul>
-            {% for user, amount in balance_entries %}
-                <li>{{ user.username }} : {{ amount }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No balances yet.</p>
-    {% endif %}
-
-    <h2>Expenses</h2>
+  <h2>Balances</h2>
+  {% if balance_entries %}
     <ul>
-        {% for expense in expenses %}
-            <li>
-                {{ expense.description }} - {{ expense.amount }}
-                (paid by {{ expense.paid_by.username }})
-            </li>
-        {% empty %}
-            <li>No expenses yet.</li>
-        {% endfor %}
+      {% for user, amount in balance_entries %}
+        <li>
+          {{ user.username }} : 
+          {% if amount > 0 %} +{{ amount }} (should receive){% else %} {{ amount }} (owes){% endif %}
+        </li>
+      {% endfor %}
     </ul>
+  {% else %}
+    <p>No balances yet.</p>
+  {% endif %}
 
-    <p>
-        <a href="{% url 'add_expense' group.id %}">Add Expense</a>
-    </p>
+  <h2>Expenses</h2>
+  {% if expenses %}
+    <ul>
+      {% for expense in expenses %}
+        <li>
+          <strong>{{ expense.description }}</strong> — {{ expense.amount }} 
+          (paid by {{ expense.paid_by.username }})<br>
 
-    <p>
-        <a href="{% url 'dashboard' %}">Back to groups</a>
-    </p>
+          <!-- per-expense split breakdown -->
+          <em>Splits:</em>
+          <ul>
+            {% for split in expense.splits.all %}
+              <li>{{ split.user.username }} : {{ split.amount }}</li>
+            {% empty %}
+              <li>No split details.</li>
+            {% endfor %}
+          </ul>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No expenses yet.</p>
+  {% endif %}
+
+  <p><a href="{% url 'add_expense' group.id %}">Add Expense</a></p>
+  <p><a href="{% url 'dashboard' %}">Back to groups</a></p>
 </body>
 </html>
