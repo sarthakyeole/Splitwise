@@ -27,3 +27,40 @@ def calculate_balances(group: Group):
 
 
     return balances
+
+
+def simplify_debts(balances):
+    """
+    Input: balances dictionary {user: amount}
+    Output: list of (from_user, to_user, amount)
+    """
+
+    creditors = []      # people who should receive money (as they already paid)
+    debtors = []        # people who owes money (they have to pay to others)
+
+    for user, amount in balances.items():
+        if amount > 0:
+            creditors.append([user, amount])
+        elif amount < 0:
+            debtors.append([user, -amount])
+
+    i = j = 0
+    transactions = []
+
+    while i < len(debtors) and j < len(creditors):
+        debtor, debt_amount = debtors[i]
+        creditor, credit_amount = creditors[j]
+
+        settle_amount = min(debt_amount, credit_amount)
+
+        transactions.append((debtor, creditor, round(settle_amount, 2)))
+
+        debtors[i][1] -= settle_amount
+        creditors[j][1] -= settle_amount
+
+        if debtors[i][1] == 0:
+            i += 1
+        if creditors[j][1] == 0:
+            j += 1
+
+    return transactions

@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django import forms
 from .models import Group, Expense, Split
-from .utils import calculate_balances
+from .utils import calculate_balances, simplify_debts
 from .forms import GroupForm, ExpenseForm
 from django.contrib.auth.models import User
 from django.contrib import messages
@@ -23,14 +23,16 @@ def group_detail(request, group_id):
     group = get_object_or_404(Group, id=group_id, members=request.user)
 
     balances_dict = calculate_balances(group)
-
     balance_entries = list(balances_dict.items())
+
+    transactions = simplify_debts(balances_dict)
 
     expenses = group.expenses.select_related('paid_by').prefetch_related('splits__user').all().order_by('-created_at')
 
     return render(request, 'expenses/group_detail.html', {
         'group': group,
         'balances': balance_entries,
+        'transactions': transactions,
         'expenses': expenses,
     })
 

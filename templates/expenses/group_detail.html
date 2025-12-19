@@ -7,6 +7,23 @@
 <body>
   <h1>{{ group.name }}</h1>
 
+  <h2>Who should pay whom</h2>
+
+  {% if transactions %}
+      <ul>
+          {% for debtor, creditor, amount in transactions %}
+              <li>
+                  <strong>{{ debtor.username }}</strong>
+                  should pay
+                  <strong>{{ creditor.username }}</strong>
+                  ₹{{ amount }}
+              </li>
+          {% endfor %}
+      </ul>
+  {% else %}
+      <p>All settled 🎉</p>
+  {% endif %}
+
   <h2>Balances</h2>
   {% if balance_entries %}
     <ul>
