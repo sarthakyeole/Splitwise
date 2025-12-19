@@ -164,16 +164,28 @@ def register(request):
 @login_required
 def quick_settle(request, group_id):
     if request.method == 'POST':
-        group = get_object_or_404(Group, id=group_id, members = request.user)
+        group = get_object_or_404(Group, id=group_id, members=request.user)
 
-        paid_by_id = request.POST.get('paid_by')
-        paid_to_id = request.POST.get('paid_to')
-        amount = request.POST.get('amount')
+        paid_by_id = int(request.POST['paid_by'])
+        paid_to_id = int(request.POST['paid_to'])
+        amount = float(request.POST['amount'])
+
+        balances = calculate_balances(group)
+
+        debtor_balance = balances.get(
+            User.objects.get(id=paid_by_id),
+            0
+        )
+
+        owed_amount = abs(debtor_balance)
+
+        if amount <= 0 or amount > owed_amount:
+            return redirect('group_detail', group_id=group_id)
 
         Settlement.objects.create(
-            group=group, 
-            paid_by_id=paid_by_id, 
-            paid_to_id=paid_to_id, 
+            group=group,
+            paid_by_id=paid_by_id,
+            paid_to_id=paid_to_id,
             amount=amount
         )
 
