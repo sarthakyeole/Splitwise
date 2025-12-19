@@ -1,32 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>Activity Log - {{ group.name }}</title>
-</head>
-<body>
-    <h1>Activity Log</h1>
-    <h3>{{ group.name }}</h3>
+{% extends "base.html" %}
+{% block title %}Activity Log{% endblock %}
 
-    <hr>
+{% block content %}
 
-    {% if activities %}
-        <ul>
-            {% for activity in activities %}
-                <li>
-                    {{ activity.message }}
-                    <small style="color: gray;">
-                        ({{ activity.created_at|timesince }} ago)
-                    </small>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No activity yet.</p>
-    {% endif %}
+<h3>Activity Log – {{ group.name }}</h3>
 
-    <hr>
+<div class="card mt-3">
+  <ul class="list-group list-group-flush">
+    {% for activity in activities %}
+      <li class="list-group-item">
+        {{ activity.message }}
+        <div class="small text-muted">
+          {{ activity.created_at|timesince }} ago
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
 
-    <a href="{% url 'group_detail' group.id %}">← Back to Group</a>
-</body>
-</html>
+<a href="{% url 'group_detail' group.id %}" class="btn btn-link mt-3">
+  ← Back to Group
+</a>
+
+{% endblock %}

@@ -1,31 +1,69 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Create Group</title>
-</head>
-<body>
-  <h1>Create Group</h1>
+{% extends "base.html" %}
+{% block title %}Create Group{% endblock %}
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
-    <p>
-      {{ form.name.label_tag }}<br>
-      {{ form.name }}
-      {{ form.name.errors }}
-    </p>
+{% block content %}
 
-    <fieldset>
-      <legend>Members</legend>
-      {{ form.members.errors }}
-      {{ form.members }}
-      <p><small>{{ form.members.help_text }}</small></p>
-    </fieldset>
+<div class="row justify-content-center">
+  <div class="col-md-6">
 
-    <button type="submit">Create Group</button>
-  </form>
+    <div class="card">
+      <div class="card-header fw-bold">
+        Create New Group
+      </div>
 
-  <p><a href="{% url 'dashboard' %}">Back to dashboard</a></p>
-</body>
-</html>
+      <div class="card-body">
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+
+          <!-- GROUP NAME -->
+          <div class="mb-3">
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {% for error in form.name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <!-- MEMBERS -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Members</label>
+
+            <div class="border rounded p-3">
+              {{ form.members }}
+            </div>
+
+            {% for error in form.members.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+
+            <div class="form-text">
+              {{ form.members.help_text }}
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+              ← Back
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+              Create Group
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
