@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Activity Log - {{ group.name }}</title>
+</head>
+<body>
+    <h1>Activity Log</h1>
+    <h3>{{ group.name }}</h3>
+
+    <hr>
+
+    {% if activities %}
+        <ul>
+            {% for activity in activities %}
+                <li>
+                    {{ activity.message }}
+                    <small style="color: gray;">
+                        ({{ activity.created_at|timesince }} ago)
+                    </small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No activity yet.</p>
+    {% endif %}
+
+    <hr>
+
+    <a href="{% url 'group_detail' group.id %}">← Back to Group</a>
+</body>
+</html>

@@ -27,7 +27,7 @@ def group_detail(request, group_id):
 
     transactions = simplify_debts(balances_dict)
 
-    activities = group.activities.order_by('-created_at')[:20]
+    recent_activities = group.activities.order_by('-created_at')[:5]
 
     expenses = group.expenses.select_related('paid_by').prefetch_related('splits__user').all().order_by('-created_at')
 
@@ -36,7 +36,7 @@ def group_detail(request, group_id):
         'balances': balance_entries,
         'transactions': transactions,
         'expenses': expenses,
-        'activities': activities,
+        'recent_activities': recent_activities,
     })
 
 
@@ -213,3 +213,14 @@ def quick_settle(request, group_id):
         )
 
     return redirect('group_detail', group_id=group_id)
+
+@login_required
+def activity_log(request, group_id):
+    group = get_object_or_404(Group, id=group_id, members=request.user)
+
+    activities = group.activities.order_by('-created_at')
+
+    return render(request, 'expenses/activity_log.html', {
+        'group': group, 
+        'activities': activities,
+    })
