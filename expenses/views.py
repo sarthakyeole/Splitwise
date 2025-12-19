@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django import forms
-from .models import Group, Expense, Split
+from .models import Group, Expense, Split, Settlement
 from .utils import calculate_balances, simplify_debts
 from .forms import GroupForm, ExpenseForm
 from django.contrib.auth.models import User
@@ -160,3 +160,21 @@ def register(request):
         form = UserCreationForm()
 
     return render(request, 'registration/register.html', {'form': form})
+
+@login_required
+def quick_settle(request, group_id):
+    if request.method == 'POST':
+        group = get_object_or_404(Group, id=group_id, members = request.user)
+
+        paid_by_id = request.POST.get('paid_by')
+        paid_to_id = request.POST.get('paid_to')
+        amount = request.POST.get('amount')
+
+        Settlement.objects.create(
+            group=group, 
+            paid_by_id=paid_by_id, 
+            paid_to_id=paid_to_id, 
+            amount=amount
+        )
+
+    return redirect('group_detail', group_id=group_id)

@@ -21,9 +21,9 @@ def calculate_balances(group: Group):
 
     
     # 2) apply settlements (who paid to whom back)
-    # for s in group.settlements.select_related('paid_by', 'paid_to'):
-    #     balances[s.paid_by] -= float(s.amount)
-    #     balances[s.paid_to] += float(s.amount)
+    for settlement in group.settlements.select_related('paid_by', 'paid_to'):
+        balances[settlement.paid_by] += float(settlement.amount)
+        balances[settlement.paid_to] -= float(settlement.amount)
 
 
     return balances

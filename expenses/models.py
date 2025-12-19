@@ -58,20 +58,20 @@ class Split(models.Model):
 
 class Settlement(models.Model):
     group = models.ForeignKey(
-        Group, 
+        Group,
         on_delete=models.CASCADE,
         related_name='settlements'
     )
 
     paid_by = models.ForeignKey(
-        Group,
+        User,
         on_delete=models.CASCADE,
         related_name='settlements_made'
     )
 
-    paid_by = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
+    paid_to = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
         related_name='settlements_received'
     )
 
@@ -79,5 +79,4 @@ class Settlement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.paid_by} paid {self.paid_to} - {self.amount}"
-    
+        return f"{self.paid_by.username} paid {self.paid_to.username} ₹{self.amount}"
