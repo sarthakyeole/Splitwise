@@ -6,6 +6,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>{{ group.name }}</h2>
   <div class="d-flex gap-2">
+    <a href="{% url 'export_group_pdf' group.id %}" class="btn btn-outline-danger btn-sm ms-2">
+      ⬇ Export PDF
+    </a>
     <a href="{% url 'export_group_csv' group.id %}" class="btn btn-outline-primary btn-sm">
       ⬇ Export CSV
     </a>
