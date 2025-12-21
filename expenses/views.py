@@ -9,7 +9,9 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
-
+import csv
+from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def dashboard(request):
@@ -224,3 +226,46 @@ def activity_log(request, group_id):
         'group': group, 
         'activities': activities,
     })
+
+@login_required
+def export_group_csv(request, group_id):
+    group = get_object_or_404(Group, id=group_id, members=request.user)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{group.name}_summary.csv"'
+
+    writer = csv.writer(response)
+
+    # Group info
+    writer.writerow(['Group Name', group.name])
+    writer.writerow([])
+    
+    # Members
+    writer.writerow(['Members'])
+    for m in group.members.all():
+        writer.writerow([m.username])
+    writer.writerow([])
+
+    # Expenses
+    writer.writerow(['Expenses'])
+    writer.writerow(['Description', 'Paid By', 'Amount'])
+    for e in group.expenses.select_related('paid_by'):
+        writer.writerow([e.description, e.paid_by.username, e.amount])
+    writer.writerow([])
+
+    # Settlements
+    writer.writerow(['Settlements'])
+    writer.writerow(['Paid By', 'Paid To', 'Amount'])
+    for s in group.settlements.select_related('paid_by', 'paid_to'):
+        writer.writerow([s.paid_by.username, s.paid_to.username, s.amount])
+    writer.writerow([])
+
+    # Final balances
+    balances = calculate_balances(group)
+    writer.writerow(['Final Balances'])
+    writer.writerow(['User', 'Net Amount'])
+    for user, amount in balances.items():
+        writer.writerow([user.username, amount])
+
+    return response
+    

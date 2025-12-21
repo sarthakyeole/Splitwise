@@ -9,4 +9,5 @@ urlpatterns = [
     path('groups/<int:group_id>/', views.group_detail, name='group_detail'),
     path('groups/<int:group_id>/add-expense/', views.add_expense, name='add_expense'),
     path('accounts/register/', views.register, name='register'),
+    path('groups/<int:group_id>/export/csv/', views.export_group_csv, name='export_group_csv'),
 ]
