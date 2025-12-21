@@ -1,18 +1,59 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Virtual environment
 venv/
+env/
+ENV/
+.venv
 
 # Django
 db.sqlite3
+*.sqlite3
 /staticfiles/
+/static/
 media/
+*.log
+local_settings.py
 
 # VSCode
 .vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
 
 # Mac/Windows
 .DS_Store
 Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# pytest
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
