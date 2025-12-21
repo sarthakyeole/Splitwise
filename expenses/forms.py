@@ -11,9 +11,7 @@ class GroupForm(forms.ModelForm):
             'name': forms.TextInput(
                 attrs={'class': 'form-control'}
             ),
-            'members': forms.CheckboxSelectMultiple(
-                attrs={'class': 'form-check-input'}
-            ),
+            'members': forms.CheckboxSelectMultiple(),
         }
 
     def __init__(self, *args, **kwargs):

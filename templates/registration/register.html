@@ -1,44 +1,72 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Sign Up</title>
-</head>
-<body>
-  <h1>Create an account</h1>
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
 
-  {% if messages %}
-    {% for msg in messages %}
-      <div style="color: green;">{{ msg }}</div>
-    {% endfor %}
-  {% endif %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-5">
+    <div class="card shadow">
+      <div class="card-body p-4">
+        <h2 class="card-title text-center mb-4">Create an account</h2>
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.non_field_errors }}
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="alert alert-success" role="alert">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        {% endif %}
 
-    <p>
-      {{ form.username.label_tag }}<br>
-      {{ form.username }}<br>
-      {{ form.username.errors }}
-    </p>
+        <form method="post">
+          {% csrf_token %}
+          
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
 
-    <p>
-      {{ form.password1.label_tag }}<br>
-      {{ form.password1 }}<br>
-      {{ form.password1.errors }}
-    </p>
+          <div class="mb-3">
+            {{ form.username.label_tag }}
+            <input type="text" name="username" class="form-control" id="id_username" maxlength="150" required autofocus>
+            {% if form.username.errors %}
+              <div class="text-danger small">{{ form.username.errors }}</div>
+            {% else %}
+              <small class="text-muted">150 characters or fewer. Letters, digits and @/./+/-/_ only.</small>
+            {% endif %}
+          </div>
 
-    <p>
-      {{ form.password2.label_tag }}<br>
-      {{ form.password2 }}<br>
-      {{ form.password2.errors }}
-    </p>
+          <div class="mb-3">
+            {{ form.password1.label_tag }}
+            <input type="password" name="password1" class="form-control" id="id_password1" required>
+            {% if form.password1.errors %}
+              <div class="text-danger small">{{ form.password1.errors }}</div>
+            {% else %}
+              <small class="text-muted">Your password must contain at least 8 characters.</small>
+            {% endif %}
+          </div>
 
-    <button type="submit">Sign up</button>
-  </form>
+          <div class="mb-3">
+            {{ form.password2.label_tag }}
+            <input type="password" name="password2" class="form-control" id="id_password2" required>
+            {% if form.password2.errors %}
+              <div class="text-danger small">{{ form.password2.errors }}</div>
+            {% else %}
+              <small class="text-muted">Enter the same password as before, for verification.</small>
+            {% endif %}
+          </div>
 
-  <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
-  <p><a href="{% url 'dashboard' %}">Back to dashboard</a></p>
-</body>
-</html>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Sign up</button>
+          </div>
+        </form>
+
+        <hr class="my-4">
+
+        <p class="text-center mb-0">
+          Already have an account? <a href="{% url 'login' %}">Log in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

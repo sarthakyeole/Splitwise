@@ -3,10 +3,10 @@
 
 {% block content %}
 
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-4">
   <div class="col-md-6">
 
-    <div class="card">
+    <div class="card shadow">
       <div class="card-header fw-bold">
         Create New Group
       </div>
@@ -29,13 +29,16 @@
             {% for error in form.name.errors %}
               <div class="text-danger small">{{ error }}</div>
             {% endfor %}
+            {% if form.name.help_text %}
+              <div class="form-text">{{ form.name.help_text }}</div>
+            {% endif %}
           </div>
 
           <!-- MEMBERS -->
           <div class="mb-3">
             <label class="form-label fw-bold">Members</label>
 
-            <div class="border rounded p-3">
+            <div class="border rounded p-3 members-checkbox-list">
               {{ form.members }}
             </div>
 
@@ -44,7 +47,7 @@
             {% endfor %}
 
             <div class="form-text">
-              {{ form.members.help_text }}
+              Select members to add to the group (you can include yourself).
             </div>
           </div>
 
@@ -65,5 +68,41 @@
 
   </div>
 </div>
+
+<style>
+  /* Fix checkbox overlap styling */
+  .members-checkbox-list ul {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+  }
+  
+  .members-checkbox-list li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+  }
+  
+  .members-checkbox-list label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .members-checkbox-list input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  
+  .members-checkbox-list li:hover {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding-left: 8px;
+  }
+</style>
 
 {% endblock %}
