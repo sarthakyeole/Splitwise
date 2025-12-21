@@ -10,6 +10,25 @@
   </a>
 </div>
 
+<!-- GROUP MEMBERS -->
+<div class="card mb-4">
+  <div class="card-header fw-bold">
+    Group Members ({{ group.members.count }})
+  </div>
+
+  <ul class="list-group list-group-flush">
+    {% for member in group.members.all %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ member.username }}
+
+        {% if member == user %}
+          <span class="badge bg-primary">You</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
 <!-- RECENT ACTIVITY -->
 <div class="card mb-4">
   <div class="card-header fw-bold">Recent Activity</div>
