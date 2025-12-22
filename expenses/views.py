@@ -5,10 +5,8 @@ from .models import Group, Expense, Split, Settlement, Activity
 from .utils import calculate_balances, simplify_debts
 from .forms import GroupForm, ExpenseForm
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib import messages
 import csv
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
@@ -86,7 +84,6 @@ def add_expense(request, group_id):
                     message=f'{request.user.username} added expense "{expense.description}" ₹{expense.amount}'
                 )
 
-                messages.success(request, "Expense saved (equal split).")
                 return redirect('group_detail', group_id=group.id)
 
             # Unequal split
@@ -127,7 +124,6 @@ def add_expense(request, group_id):
                     message=f'{request.user.username} added expense "{expense.description}" ₹{expense.amount}'
                 )
 
-                messages.success(request, "Expense saved (unequal split).")
                 return redirect('group_detail', group_id=group.id)
 
         return render(request, 'expenses/add_expense.html', {
@@ -156,7 +152,6 @@ def create_group(request):
             if request.user not in group.members.all():
                 group.members.add(request.user)
 
-            messages.success(request, f"Group '{group.name}' created.")
             return redirect('group_detail', group_id=group.id)
 
     else:
@@ -172,7 +167,6 @@ def register(request):
         if form.is_valid():
             user = form.save()
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}. You are now logged in')
 
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=raw_password)
@@ -429,12 +423,12 @@ def export_group_pdf(request, group_id):
     draw_section_header("Expenses")
     expenses = group.expenses.select_related('paid_by').order_by('-created_at')
     if expenses.exists():
-        expenses_data = [['Description', 'Paid By', 'Amount (₹)']]
+        expenses_data = [['Description', 'Paid By', 'Amount (Rs.)']]
         for e in expenses:
             expenses_data.append([
                 e.description[:40],  # Truncate long descriptions
                 e.paid_by.username,
-                f"₹{e.amount:.2f}"
+                f"Rs. {e.amount:.2f}"
             ])
         draw_table(expenses_data, col_widths=[9*cm, 4*cm, 4*cm])
     else:
@@ -445,12 +439,12 @@ def export_group_pdf(request, group_id):
     draw_section_header("Settlements")
     settlements = group.settlements.select_related('paid_by', 'paid_to').order_by('-created_at')
     if settlements.exists():
-        settlements_data = [['Paid By', 'Paid To', 'Amount (₹)']]
+        settlements_data = [['Paid By', 'Paid To', 'Amount (Rs.)']]
         for s in settlements:
             settlements_data.append([
                 s.paid_by.username,
                 s.paid_to.username,
-                f"₹{s.amount:.2f}"
+                f"Rs. {s.amount:.2f}"
             ])
         draw_table(settlements_data, col_widths=[5*cm, 5*cm, 4*cm])
     else:
@@ -461,12 +455,12 @@ def export_group_pdf(request, group_id):
     draw_section_header("Final Balances")
     balances = calculate_balances(group)
     if balances:
-        balances_data = [['Member', 'Balance (₹)', 'Status']]
+        balances_data = [['Member', 'Balance (Rs.)', 'Status']]
         for user, amount in sorted(balances.items(), key=lambda x: x[1], reverse=True):
             status = "Should Receive" if amount > 0 else "Owes" if amount < 0 else "Settled"
             balances_data.append([
                 user.username,
-                f"₹{abs(amount):.2f}",
+                f"Rs. {abs(amount):.2f}",
                 status
             ])
         draw_table(balances_data, col_widths=[6*cm, 4*cm, 5*cm])
@@ -478,12 +472,12 @@ def export_group_pdf(request, group_id):
     draw_section_header("Settlement Recommendations")
     transactions = simplify_debts(balances)
     if transactions:
-        transactions_data = [['From', 'To', 'Amount (₹)']]
+        transactions_data = [['From', 'To', 'Amount (Rs.)']]
         for debtor, creditor, amount in transactions:
             transactions_data.append([
                 debtor.username,
                 creditor.username,
-                f"₹{amount:.2f}"
+                f"Rs. {amount:.2f}"
             ])
         draw_table(transactions_data, col_widths=[5*cm, 5*cm, 4*cm])
     else:

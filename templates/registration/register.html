@@ -8,14 +8,6 @@
       <div class="card-body p-4">
         <h2 class="card-title text-center mb-4">Create an account</h2>
 
-        {% if messages %}
-          {% for msg in messages %}
-            <div class="alert alert-success" role="alert">
-              {{ msg }}
-            </div>
-          {% endfor %}
-        {% endif %}
-
         <form method="post">
           {% csrf_token %}
           
