@@ -30,12 +30,15 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 
 ALLOWED_HOSTS = [
+    "splitwise-7ukd.onrender.com",
+    "localhost",
+    "127.0.0.1",
     '*',
-    ".onrender.com",
+    ".onrender.com"
     ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
+    "https://splitwise-7ukd.onrender.com"
 ]
 
 
