@@ -87,7 +87,7 @@ class Settlement(models.Model):
         max_length=100, blank=True, null=True
     )
     razorpay_payment_id = models.CharField(
-        max_length=100, blank=True, null=True
+        max_length=100, unique=True, blank=True, null=True
     )
     razorpay_signature = models.CharField(
         max_length=100, blank=True, null=True

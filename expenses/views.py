@@ -45,10 +45,29 @@ def create_settlement_payment(request, group_id):
 
     paid_by = get_object_or_404(User, id=request.POST["paid_by"])
     paid_to = get_object_or_404(User, id=request.POST["paid_to"])
-    amount = float(request.POST["amount"])
+
+    # BUG FIX: Only the debtor themselves can initiate payment
+    if paid_by != request.user:
+        return HttpResponse("You can only pay for yourself.", status=403)
+
+    # BUG FIX: Validate that paid_by actually owes money
+    balances = calculate_balances(group)
+    debtor_balance = balances.get(paid_by, 0)
+    if debtor_balance >= 0:
+        return HttpResponse("You don't owe any money in this group.", status=400)
+
+    # BUG FIX: Cap amount to what is actually owed
+    amount = round(float(request.POST["amount"]), 2)
+    max_owed = round(abs(debtor_balance), 2)
+    amount = min(amount, max_owed)
+
+    if amount <= 0:
+        return HttpResponse("Invalid amount.", status=400)
+
+    amount_paise = int(round(amount * 100))
 
     order = client.order.create({
-        "amount": int(amount * 100),
+        "amount": amount_paise,
         "currency": "INR",
         "payment_capture": 1
     })
@@ -64,6 +83,7 @@ def create_settlement_payment(request, group_id):
     return render(request, "expenses/payment.html", {
         "order_id": order["id"],
         "amount": amount,
+        "amount_paise": amount_paise,
         "razorpay_key": settings.RAZORPAY_KEY_ID,
         "paid_to": paid_to,
     })
@@ -73,6 +93,11 @@ def settlement_payment_success(request):
     payment_id = request.GET.get("razorpay_payment_id")
     order_id = request.GET.get("razorpay_order_id")
     signature = request.GET.get("razorpay_signature")
+
+    # BUG FIX: Prevent duplicate settlement on refresh/double-click
+    if Settlement.objects.filter(razorpay_payment_id=payment_id).exists():
+        existing = Settlement.objects.get(razorpay_payment_id=payment_id)
+        return redirect("group_detail", group_id=existing.group.id)
 
     pending = request.session.get('pending_payment')
     if not pending or pending.get('order_id') != order_id:
@@ -286,11 +311,24 @@ def quick_settle(request, group_id):
         paid_to_id = int(request.POST['paid_to'])
         amount = round(float(request.POST['amount']), 2)
 
-        if amount <= 0:
-            return redirect('group_detail', group_id=group_id)
-
         debtor = User.objects.get(id=paid_by_id)
         creditor = User.objects.get(id=paid_to_id)
+
+        # BUG FIX: Only the debtor themselves can settle
+        if debtor != request.user:
+            return HttpResponse("You can only settle your own debts.", status=403)
+
+        # BUG FIX: Validate debtor actually owes money & cap amount
+        balances = calculate_balances(group)
+        debtor_balance = balances.get(debtor, 0)
+        if debtor_balance >= 0:
+            return redirect('group_detail', group_id=group_id)
+
+        max_owed = round(abs(debtor_balance), 2)
+        amount = min(amount, max_owed)
+
+        if amount <= 0:
+            return redirect('group_detail', group_id=group_id)
 
         Settlement.objects.create(
             group=group,
@@ -300,7 +338,6 @@ def quick_settle(request, group_id):
             status='SUCCESS'
         )
 
-        # New Activity log
         Activity.objects.create(
             group=group,
             user=request.user,
