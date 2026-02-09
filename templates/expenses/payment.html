@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Online Payment{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow-sm">
+    <div class="card-header fw-bold">
+      Online Settlement
+    </div>
+
+    <div class="card-body">
+      <p class="mb-2">
+        <strong>Paying:</strong> ₹{{ amount }}
+      </p>
+
+      <p class="mb-3">
+        <strong>To:</strong> {{ paid_to.username }}
+      </p>
+
+      <button id="pay-btn" class="btn btn-primary w-100">
+        💳 Pay with Razorpay
+      </button>
+
+      <p class="text-muted small mt-3 text-center">
+        Secure payment powered by Razorpay (Test Mode)
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+  var options = {
+    "key": "{{ razorpay_key }}",
+    "amount": "{{ amount }}" * 100,
+    "currency": "INR",
+    "name": "Splitwise",
+    "description": "Group Settlement Payment",
+    "order_id": "{{ order_id }}",
+
+    "handler": function (response) {
+      window.location.href =
+        "{% url 'settlement_payment_success' %}" +
+        "?razorpay_payment_id=" + response.razorpay_payment_id +
+        "&razorpay_order_id=" + response.razorpay_order_id +
+        "&razorpay_signature=" + response.razorpay_signature;
+    },
+
+    "prefill": {
+      "name": "{{ request.user.username }}",
+    },
+
+    "theme": {
+      "color": "#0d6efd"
+    }
+  };
+
+  var rzp = new Razorpay(options);
+
+  document.getElementById("pay-btn").onclick = function (e) {
+    rzp.open();
+    e.preventDefault();
+  };
+</script>
+{% endblock %}
