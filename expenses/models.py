@@ -57,6 +57,12 @@ class Split(models.Model):
 
 
 class Settlement(models.Model):
+    PAYMENT_STATUS_CHOICES = (
+        ('CREATED', 'Created'),
+        ('SUCCESS', 'Success'),
+        ('FAILED', 'Failed'),
+    )
+
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
@@ -76,10 +82,30 @@ class Settlement(models.Model):
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    razorpay_order_id = models.CharField(
+        max_length=100, blank=True, null=True
+    )
+    razorpay_payment_id = models.CharField(
+        max_length=100, blank=True, null=True
+    )
+    razorpay_signature = models.CharField(
+        max_length=100, blank=True, null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default='CREATED'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.paid_by.username} paid {self.paid_to.username} ₹{self.amount}"
+        return (
+            f"{self.paid_by.username} paid {self.paid_to.username}"
+            f"₹{self.amount} [{self.status}]"
+        )
 
 
 class Activity(models.Model):

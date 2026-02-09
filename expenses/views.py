@@ -17,6 +17,102 @@ from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
+import razorpay
+from django.conf import settings
+from django.shortcuts import render
+from .models import Expense
+
+
+if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
+    client = razorpay.Client(
+        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+    )
+else:
+    client = None
+
+@login_required
+def create_settlement_payment(request, group_id):
+    if request.method != "POST":
+        return redirect("group_detail", group_id=group_id)
+
+    if not client:
+        return HttpResponse(
+            "Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.",
+            status=500
+        )
+
+    group = get_object_or_404(Group, id=group_id, members=request.user)
+
+    paid_by = get_object_or_404(User, id=request.POST["paid_by"])
+    paid_to = get_object_or_404(User, id=request.POST["paid_to"])
+    amount = float(request.POST["amount"])
+
+    order = client.order.create({
+        "amount": int(amount * 100),
+        "currency": "INR",
+        "payment_capture": 1
+    })
+
+    request.session['pending_payment'] = {
+        'group_id': group_id,
+        'paid_by_id': paid_by.id,
+        'paid_to_id': paid_to.id,
+        'amount': str(amount),
+        'order_id': order["id"],
+    }
+
+    return render(request, "expenses/payment.html", {
+        "order_id": order["id"],
+        "amount": amount,
+        "razorpay_key": settings.RAZORPAY_KEY_ID,
+        "paid_to": paid_to,
+    })
+
+@login_required
+def settlement_payment_success(request):
+    payment_id = request.GET.get("razorpay_payment_id")
+    order_id = request.GET.get("razorpay_order_id")
+    signature = request.GET.get("razorpay_signature")
+
+    pending = request.session.get('pending_payment')
+    if not pending or pending.get('order_id') != order_id:
+        return HttpResponse("Invalid payment session.", status=400)
+
+    try:
+        client.utility.verify_payment_signature({
+            "razorpay_order_id": order_id,
+            "razorpay_payment_id": payment_id,
+            "razorpay_signature": signature
+        })
+    except razorpay.errors.SignatureVerificationError:
+        return HttpResponse(
+            "Payment verification failed. Please try again.",
+            status=400
+        )
+
+    settlement = Settlement.objects.create(
+        group_id=pending['group_id'],
+        paid_by_id=pending['paid_by_id'],
+        paid_to_id=pending['paid_to_id'],
+        amount=pending['amount'],
+        razorpay_order_id=order_id,
+        razorpay_payment_id=payment_id,
+        razorpay_signature=signature,
+        status='SUCCESS'
+    )
+
+    Activity.objects.create(
+        group=settlement.group,
+        user=settlement.paid_by,
+        message=(
+            f"{settlement.paid_by.username} paid "
+            f"₹{settlement.amount} to "
+            f"{settlement.paid_to.username} (Online)"
+        )
+    )
+
+    del request.session['pending_payment']
+    return redirect("group_detail", group_id=settlement.group.id)
 
 @login_required
 def dashboard(request):
@@ -188,24 +284,20 @@ def quick_settle(request, group_id):
 
         paid_by_id = int(request.POST['paid_by'])
         paid_to_id = int(request.POST['paid_to'])
-        amount = float(request.POST['amount'])
+        amount = round(float(request.POST['amount']), 2)
 
-        balances = calculate_balances(group)
+        if amount <= 0:
+            return redirect('group_detail', group_id=group_id)
 
         debtor = User.objects.get(id=paid_by_id)
         creditor = User.objects.get(id=paid_to_id)
-
-        debtor_balance = balances.get(debtor, 0)
-        owed_amount = abs(debtor_balance)
-
-        if amount <= 0 or amount > owed_amount:
-            return redirect('group_detail', group_id=group_id)
 
         Settlement.objects.create(
             group=group,
             paid_by=debtor,
             paid_to=creditor,
-            amount=amount
+            amount=amount,
+            status='SUCCESS'
         )
 
         # New Activity log
