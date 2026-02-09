@@ -65,37 +65,47 @@
       {% for debtor, creditor, amount in transactions %}
 
         <div class="row align-items-center mb-3">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <strong>{{ debtor.username }}</strong> → {{ creditor.username }}
           </div>
 
-          <div class="col-md-2">
+          <div class="col-md-1">
             ₹{{ amount }}
           </div>
 
           {% if request.user == debtor %}
             <div class="col-md-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">₹</span>
+                <input type="number" class="form-control" id="settle-amount-{{ forloop.counter }}"
+                       value="{{ amount }}" min="1" max="{{ amount }}" step="0.01">
+              </div>
+            </div>
+
+            <div class="col-md-2">
               <form method="post"
-                    action="{% url 'quick_settle' group.id %}">
+                    action="{% url 'quick_settle' group.id %}"
+                    onsubmit="document.getElementById('cash-amt-{{ forloop.counter }}').value = document.getElementById('settle-amount-{{ forloop.counter }}').value;">
                 {% csrf_token %}
                 <input type="hidden" name="paid_by" value="{{ debtor.id }}">
                 <input type="hidden" name="paid_to" value="{{ creditor.id }}">
-                <input type="hidden" name="amount" value="{{ amount }}">
+                <input type="hidden" name="amount" id="cash-amt-{{ forloop.counter }}" value="{{ amount }}">
                 <button class="btn btn-outline-success btn-sm w-100">
-                  💵 Pay Cash
+                  💵 Cash
                 </button>
               </form>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
               <form method="post"
-                    action="{% url 'create_settlement_payment' group.id %}">
+                    action="{% url 'create_settlement_payment' group.id %}"
+                    onsubmit="document.getElementById('online-amt-{{ forloop.counter }}').value = document.getElementById('settle-amount-{{ forloop.counter }}').value;">
                 {% csrf_token %}
                 <input type="hidden" name="paid_by" value="{{ debtor.id }}">
                 <input type="hidden" name="paid_to" value="{{ creditor.id }}">
-                <input type="hidden" name="amount" value="{{ amount }}">
+                <input type="hidden" name="amount" id="online-amt-{{ forloop.counter }}" value="{{ amount }}">
                 <button class="btn btn-primary btn-sm w-100">
-                  💳 Pay Online
+                  💳 Online
                 </button>
               </form>
             </div>
