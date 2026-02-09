@@ -20,8 +20,8 @@ def calculate_balances(group: Group):
             balances[split.user] -= float(split.amount)
 
     
-    # 2) apply settlements (who paid to whom back)
-    for settlement in group.settlements.select_related('paid_by', 'paid_to'):
+    # 2) apply only successful/completed settlements
+    for settlement in group.settlements.filter(status='SUCCESS').select_related('paid_by', 'paid_to'):
         balances[settlement.paid_by] += float(settlement.amount)
         balances[settlement.paid_to] -= float(settlement.amount)
 
