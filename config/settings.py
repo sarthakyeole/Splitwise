@@ -12,9 +12,13 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -28,6 +32,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
 # DEBUG = True
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 
 ALLOWED_HOSTS = [
     "splitwise-7ukd.onrender.com",
